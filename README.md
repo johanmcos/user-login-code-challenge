@@ -18,3 +18,12 @@ Create a backend (preferably using [GoLang](https://go.dev/), but not required) 
 1. Within reason, treat your solution as if it would become a production system.
 1. If you have any questions, feel free to contact us at code_challenge@scoir.com
 
+## How-to
+
+to-do
+
+## Assumptions
+
+- This code is not quite fit for production use, what's missing includes
+  - TLS encryption, which would require getting a public & private certificate from a Certificate Signing Authority
+  - better password handling
