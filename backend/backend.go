@@ -1,56 +1,88 @@
-package login_backend
+package main
 
 import (
-	"github.com/johanmcos/user-login-code-challenge/backend/pkg/database"
-	fake_email "github.com/johanmcos/user-login-code-challenge/backend/pkg/fake-email"
+	"fmt"
+	db "github.com/johanmcos/user-login-code-challenge/backend/pkg/database"
+	email "github.com/johanmcos/user-login-code-challenge/backend/pkg/fakemail"
+	"github.com/johanmcos/user-login-code-challenge/backend/pkg/user"
+	"io"
 	"net/http"
 )
 
-// EmailServer defines a generic interface for an email server
-// allows potentially using a real one in the future
-type EmailServer interface {
-	Send(recipient, msg string) error
-}
-
-// User is an individual user
-type User interface {
-	VerifyPassword(password string) bool
-}
-
-// Database defines a generic database
-type Database interface {
-	GetUser(username string) *User
-	AddUser(*User) error
-}
-
 // holds values that persist between requests
 type backend struct {
-	mailServer *EmailServer
-	db         *Database
+	mailServer *email.MailServer
+	db         *db.Database
 }
 
 // register our login handler and then listen for incoming requests
 func main() {
-	var mailServer EmailServer = fake_email.GetNewInstance()
-	var db Database = database.CreateDatabase()
-	backend := &backend{
-		&mailServer,
-		&db,
+	b := &backend{
+		email.GetNewInstance(),
+		db.CreateDatabase(),
 	}
-	http.HandleFunc("/login", loginHandler)
-	http.HandleFunc("/register", registerHandler)
-	http.HandleFunc("/forgot", forgotHandler)
-	http.ListenAndServe("localhost:8080", nil)
+	http.HandleFunc("/login", b.loginHandler)
+	http.HandleFunc("/register", b.registerHandler)
+	http.HandleFunc("/hello", func(w http.ResponseWriter, _ *http.Request) {
+		io.WriteString(w, "Hello to you as well")
+	})
+	err := http.ListenAndServe("localhost:8080", nil)
+	if err != nil {
+		panic(err)
+	}
 }
 
-func loginHandler(resp http.ResponseWriter, req *http.Request) {
-	return
+func (b *backend) loginHandler(w http.ResponseWriter, req *http.Request) {
+	username, password, ok := req.BasicAuth()
+	if !ok {
+		_, err := io.WriteString(w, "basic auth missing or malformed")
+		if err != nil {
+			fmt.Println(err)
+		}
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+	thisUser, err := b.db.GetUser(username)
+	if err != nil {
+		_, err := io.WriteString(w, "username/password not valid")
+		if err != nil {
+			fmt.Println(err)
+		}
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	if thisUser.VerifyPassword(password) {
+		_, err := io.WriteString(w, "login successfull")
+		if err != nil {
+			fmt.Println(err)
+		}
+		w.WriteHeader(http.StatusOK)
+	} else {
+		_, err := io.WriteString(w, "username/password not valid")
+		if err != nil {
+			fmt.Println(err)
+		}
+		w.WriteHeader(http.StatusUnauthorized)
+	}
 }
 
-func registerHandler(resp http.ResponseWriter, req *http.Request) {
-	return
-}
-
-func forgotHandler(resp http.ResponseWriter, req *http.Request) {
-	return
+func (b *backend) registerHandler(w http.ResponseWriter, req *http.Request) {
+	username, password, ok := req.BasicAuth()
+	if !ok {
+		_, err := io.WriteString(w, "basic auth missing or malformed")
+		if err != nil {
+			fmt.Println(err)
+		}
+		w.WriteHeader(http.StatusBadRequest)
+	}
+	newUser := user.NewUser(username, password)
+	err := b.db.AddUser(newUser)
+	if err != nil {
+		fmt.Println(err)
+		_, err := io.WriteString(w, "error when attempting to create new user")
+		if err != nil {
+			fmt.Println(err)
+		}
+		w.WriteHeader(http.StatusBadRequest)
+	}
 }

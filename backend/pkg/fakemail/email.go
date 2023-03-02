@@ -1,21 +1,21 @@
-// Package fake_email presents a workable interface for an email handler
+// Package fakemail presents a workable interface for an email handler
 // but using a placeholder implementation
-package fake_email
+package fakemail
 
 import (
 	"fmt"
 	"strings"
 )
 
-type fakeEmailServer struct{}
+type MailServer struct{}
 
 // GetNewInstance gets a new instance of our server
-func GetNewInstance() *fakeEmailServer {
-	return &fakeEmailServer{}
+func GetNewInstance() *MailServer {
+	return &MailServer{}
 }
 
 // Send "sends" an email
-func (s *fakeEmailServer) Send(address, msg string) error {
+func (s *MailServer) Send(address, msg string) error {
 	// check if the email address is valid
 	if !strings.Contains(address, "@") {
 		// TODO this should use a regex to do a more complex check
