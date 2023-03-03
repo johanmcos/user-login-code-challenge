@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	db "github.com/johanmcos/user-login-code-challenge/backend/pkg/database"
-	email "github.com/johanmcos/user-login-code-challenge/backend/pkg/fakemail"
 	"github.com/johanmcos/user-login-code-challenge/backend/pkg/user"
 	"io"
 	"net/http"
@@ -11,20 +10,18 @@ import (
 
 // holds values that persist between requests
 type backend struct {
-	mailServer *email.MailServer
-	db         *db.Database
+	db *db.Database
 }
 
 // register our login handler and then listen for incoming requests
 func main() {
 	b := &backend{
-		email.GetNewInstance(),
 		db.CreateDatabase(),
 	}
 	http.HandleFunc("/login", b.loginHandler)
 	http.HandleFunc("/register", b.registerHandler)
 	http.HandleFunc("/hello", func(w http.ResponseWriter, _ *http.Request) {
-		io.WriteString(w, "Hello to you as well")
+		_, _ = io.WriteString(w, "Hello to you as well")
 	})
 	err := http.ListenAndServe("localhost:8080", nil)
 	if err != nil {
