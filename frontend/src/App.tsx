@@ -1,67 +1,65 @@
 import React, {FormEvent, useState} from 'react';
 import logo from './logo.svg';
 import './App.css';
-import {TextEncoder} from "util";
 
-type ActionType = "login"|"register"
+type ActionType = "login" | "register"
 
-const apiURL = "localhost:8080"
+const apiURL = "http://localhost:8080"
 
 function App() {
-  const [username, setUsername] = useState("")
-  const [password, setPassword] = useState("")
-  const [actionType, setActionType] = useState<ActionType>("register")
-  const [status, setStatus] = useState("waiting for action")
+    const [username, setUsername] = useState("")
+    const [password, setPassword] = useState("")
+    const [actionType, setActionType] = useState<ActionType>("login")
+    const [status, setStatus] = useState("waiting for action")
 
-  const handleSubmit = async (event: FormEvent) => {
-    const encoder = new TextEncoder()
-    const data = encoder.encode(password)
-    const hash = await crypto.subtle.digest('SHA-256', data)
-    try {
-      const response = await fetch(`${apiURL}/${actionType}`, {
-        headers: {
-          'Authorization': 'Basic ' + Buffer.from(username + ":" + hash).toString('base64'),
+    const handleSubmit = async (evt: FormEvent) => {
+        evt.preventDefault()
+        setStatus("submitting request...")
+        const url = `${apiURL}/${actionType}`
+        console.log(`submitting to url ${url}...`)
+        try {
+            const response = await fetch(url, {
+                method: "POST",
+                body: JSON.stringify({username, password})
+            })
+            console.log("response promise resolved", response)
+            const data = await response.text()
+            console.log(data)
+            setStatus(data)
+            // setStatus(JSON.parse(data))
+            // setStatus(response.ok ? "success": `${response.status}: ${response.statusText}`)
+        } catch (err) {
+            setStatus("Error encounterd " + err)
         }
-      })
-      let outcome = actionType + response.ok? "succeeded" : "failed"
-      setStatus(outcome)
-    } catch (err) {
-      setStatus("Error encountered " + err)
     }
-  }
 
-  const loginForm = (type:ActionType):JSX.Element => {
+    const switchActionText = () => actionType === "login" ? "Don't have an account? Click here to register" : "Already have an account? Click here to log in"
+
     return (
-        <form>
-          <label>
-            Username:
-            <input type="text"/>
-          </label>
-          <label>
-            Password:
-            <input type="password"/>
-          </label>
-          <input type="submit" value="Submit"/>
-        </form>
-    )
-  }
-
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-      </header>
-      <body className="App-body">
-        <label>
-          action
-          <select>
-            
-          </select>
-          </input>
-        </label>
-      </body>
-    </div>
-  );
+        <div className="App">
+            <header className="App-header">
+                <img src={logo} className="App-logo" alt="logo"/>
+                <p>{status}</p>
+                <form onSubmit={handleSubmit}>
+                    <label>
+                        Username:
+                        <input type="text" value={username} onChange={evt => setUsername(evt.target.value)}/>
+                    </label>
+                    <br/>
+                    <label>
+                        Password:
+                        <input type="password" value={password} onChange={evt => setPassword(evt.target.value)}/>
+                    </label>
+                    <br/>
+                    <button type="submit" onClick={handleSubmit}>{actionType}</button>
+                </form>
+                <button
+                    onClick={() => setActionType(actionType === "login" ? "register" : "login")}
+                    type="button">{switchActionText()}
+                </button>
+            </header>
+        </div>
+    );
 }
 
 export default App;

@@ -31,6 +31,11 @@ func (d *Database) GetUser(username string) (user *User, err error) {
 	return user, nil
 }
 
+func (d *Database) UserExists(username string) bool {
+	_, exists := d.users[username]
+	return exists
+}
+
 func CreateDatabase() *Database {
 	return &Database{
 		users: make(map[string]*User),

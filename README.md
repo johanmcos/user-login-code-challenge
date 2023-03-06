@@ -19,11 +19,24 @@ Create a backend (preferably using [GoLang](https://go.dev/), but not required) 
 1. If you have any questions, feel free to contact us at code_challenge@scoir.com
 
 ## How-to
-
-to-do
+- for backend:
+  - cd to the `/backend` directory
+  - run `go run backend.go`
+- for frontend:
+  - cd to the `frontend` directory
+  - run `npm start` or similar
+  - since we're using `react-scripts`, there are also options for building, testing, etc.
 
 ## Assumptions
 
-- This code is not quite fit for production use, what's missing includes
-  - TLS encryption, which would require getting a public & private certificate from a Certificate Signing Authority
-  - better password handling
+- I decided to do this using the minimum number of external libraries.
+  - Go backend uses no external libraries
+  - Frontend uses react + typescript 
+- The "database" is just a stand-in, there is no persistence so any users registered will disappear if the backend is restarted
+- Anyone can register a username/password
+- There are no restrictions on length or characters currently
+- Limitations:
+  - without TLS encryption, a man-in-the-middle can trivially steal user credentials
+  - the fact that it will tell you if a username already exists potentially helps an attacker brute force a login
+  - nothing stops users from using bad passwords or even no password
+
